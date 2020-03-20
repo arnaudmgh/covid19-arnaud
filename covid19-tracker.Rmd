@@ -76,7 +76,7 @@ qplot(date, n_cases, colour = region, geom = "line", data = summar) + ylab("Conf
 
 ### Some Countries in Europe, Middle East and South Korea
 
-What seemed to be a slow down in France may have been a delay in number reporting, as it just added 2,134 new cases between March 15th and March 16th. 
+Italy continues to rise sharply. US surges, mainly due to New York state.
 
 ```{r echo=FALSE}
 
@@ -103,7 +103,7 @@ qplot(date, n_cases,
 
 ### US
 
-By now (March 15th) 10 states passed the stage of having at least 100 cases. for several days in a row, Massachusetts seems slow compared to the other states, and now looks much closer to the other states than the 3 most affected. Although Washington state seemed to slow down, in gained 172 cases in the last 24 hours. 
+New York state had an impressive surge on the 19th, adding in one day more cases than it had seen since the beginning of the epidemic. 
 
 ```{r echo=FALSE}
 library(plotly)
