@@ -1,0 +1,131 @@
+---
+title: "Corona Virus Progression"
+author: "Arnaud Amzallag"
+date: "3/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+```
+
+
+```{r echo=FALSE, message=FALSE}
+setwd("/Users/aamzallag/code_programming/COVID-19/")
+
+system("git pull")
+cases_path <- "csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
+conf_cases <- read_csv(cases_path)
+
+timeinfo <- file.info(cases_path)
+time_info <- system(paste("git log -1 --format=%cd", cases_path), intern = TRUE)
+
+confm <- melt(conf_cases, id.vars = c("Province/State", "Country/Region", "Lat", "Long"), 
+              variable.name = "date", value.name = "n_cases")
+confm$date <- as.Date(confm$date, format = "%m/%d/%y")
+confm <- mutate(confm, region = coalesce(`Province/State`, `Country/Region`))
+## Page created on: `r format(Sys.time(), '%d %B, %Y')`
+
+
+####
+####   SUBTRACTING NUMBER OF RECOVERY, TO PLOT THE CONFIRMED _ACTIVE_ CASES (totm$n_cases)
+rec_cases <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")
+recm <- melt(dplyr::select(rec_cases, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
+             variable.name = "date", value.name = "recovered")
+recm$date <- as.Date(confm$date, format = "%m/%d/%y")
+totm <- full_join(confm, recm)
+totm <- mutate(totm, conf_cases = n_cases)
+totm <- mutate(totm, n_cases = conf_cases - recovered)
+
+
+```
+
+### UPDATE
+
+***March 17th 2020***: The numbers have been changed to reflect the number of active cases, by subtracting the number of recovered cases from the number of confirmed cases. Hence, the decreasing of cases is now visible all around China, and also in South Korea. 
+
+[//]: # Last data update: `r format(timeinfo$ctime, format = "%B %d %Y, %H:%M", usetz = TRUE)`
+(Last data update)
+<span style="font-size:larger;">**`r time_info`** --- Last data update (git time stamp)</span>
+
+This page is pulling data from the [CSSE github repo](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series).
+
+
+
+
+### China and rest of the world
+
+On March 15th, the number of confirmed cases outside of China exceeded the number in China. While the cases in China reached a plateau, the cases outside China continue to grow exponentially.
+
+```{r echo=FALSE}
+summar <- group_by(totm, region = ifelse(`Country/Region` == "China", "China", "Ouside China"), date) %>% 
+  summarize(n_cases = sum(n_cases)) #%>% mutate(`Province/State` = "US", `Country/Region` = "US", region = "US")
+
+qplot(date, n_cases, colour = region, geom = "line", data = summar) + ylab("Confirmed Active Cases")
+# binomial_smooth <- function(...) {
+#   geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+# }
+# qplot(date, n_cases, colour = region, geom = "smooth", method = "gam", data = summar) + ylab("Confirmed cases") + geom_point() + binomial_smooth()
+```
+
+
+### Some Countries in Europe, Middle East and South Korea
+
+What seemed to be a slow down in France may have been a delay in number reporting, as it just added 2,134 new cases between March 15th and March 16th. 
+
+```{r echo=FALSE}
+
+# qplot(date, n_cases, 
+#       colour = paste(`Country/Region`, `Province/State`, sep = ", "), geom = "line",
+#       data=filter(confm, `Country/Region` %in% c("France", "United Kingdom", "Israel", "Italy", "Iran", "Korea, South"), date > as.Date("2020-02-24"))) %>% ggplotly()
+
+cases_US <- filter(totm, `Country/Region` == "US") %>% group_by(date) %>%
+  summarize(n_cases = sum(n_cases, na.rm = TRUE)) %>% mutate(`Province/State` = "US", `Country/Region` = "US", region = "US")
+
+tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United Kingdom", "Israel", "Italy", "Iran", "Korea, South", "Belgium", "US"), date > as.Date("2020-02-24"))
+
+# qplot(date, n_cases, 
+#       colour = paste(`Country/Region`, `Province/State`, sep = ", "), geom = "line",
+#       data=tmpdat) %>% ggplotly()
+
+qplot(date, n_cases, 
+      colour = region, geom = "line",
+      data=tmpdat) %>% ggplotly()
+
+
+```
+
+
+### US
+
+By now (March 15th) 10 states passed the stage of having at least 100 cases. for several days in a row, Massachusetts seems slow compared to the other states, and now looks much closer to the other states than the 3 most affected. Although Washington state seemed to slow down, in gained 172 cases in the last 24 hours. 
+
+```{r echo=FALSE}
+library(plotly)
+qplot(date, n_cases, 
+      colour = `Province/State`, geom = "line",
+      data=filter(totm, grepl("US", `Country/Region`),
+                  !grepl(",", `Province/State`),
+                  date >= as.Date("2020-03-10"))) %>% ggplotly()
+```
+
+
+```{r echo=FALSE}
+# qplot(date, n_cases, 
+      # colour = `Province/State`, geom = "line",
+      # data=filter(confm, grepl("US", `Country/Region`), grepl("MA$", `Province/State`)))
+```
+
+### China, without Hubei
+
+```{r echo=FALSE}
+qplot(date, n_cases, 
+      colour = `Province/State`, geom = "line",
+      data=filter(totm, grepl("China", `Country/Region`), !grepl("Hubei", `Province/State`)))
+```
+
