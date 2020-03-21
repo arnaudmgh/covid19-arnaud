@@ -37,10 +37,18 @@ confm <- mutate(confm, region = coalesce(`Province/State`, `Country/Region`))
 rec_cases <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")
 recm <- melt(dplyr::select(rec_cases, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
              variable.name = "date", value.name = "recovered")
-recm$date <- as.Date(confm$date, format = "%m/%d/%y")
+recm$date <- as.Date(recm$date, format = "%m/%d/%y")
 totm <- full_join(confm, recm)
 totm <- mutate(totm, conf_cases = n_cases)
 totm <- mutate(totm, n_cases = conf_cases - recovered)
+
+deaths <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")
+deathm <- melt(dplyr::select(deaths, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
+             variable.name = "date", value.name = "n_deaths")
+deathm$date <- as.Date(deathm$date, format = "%m/%d/%y")
+totm <- full_join(totm, deathm)
+totm <- mutate(totm, n_cases_old = n_cases)
+totm <- mutate(totm, n_cases = conf_cases - recovered - n_deaths)
 
 
 ```
@@ -123,9 +131,24 @@ qplot(date, n_cases,
 
 ### China, without Hubei
 
+The green line with cases that go up sharply at the end is Hong-Kong.
+
 ```{r echo=FALSE}
 qplot(date, n_cases, 
       colour = `Province/State`, geom = "line",
       data=filter(totm, grepl("China", `Country/Region`), !grepl("Hubei", `Province/State`)))
 ```
+
+### Hubei, China
+This is the province where the pandemic started. The dashed lines represent the confimed cases and the recovered cases.
+
+```{r echo=FALSE}
+qplot(date, n_cases, 
+      geom = "line",
+      data=filter(totm, grepl("Hubei", `Province/State`))) +
+  geom_line(aes(date, conf_cases), lty = 2) +
+  geom_line(aes(date, recovered), lty = 2)
+```
+
+
 
