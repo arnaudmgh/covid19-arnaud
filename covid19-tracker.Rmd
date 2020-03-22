@@ -140,14 +140,15 @@ qplot(date, n_cases,
 ```
 
 ### Hubei, China
-This is the province where the pandemic started. The dashed lines represent the confimed cases and the recovered cases.
+This is the province where the pandemic started. The dashed lines represent the confimed cases (gray), the recovered cases (blue) and the deaths (black).
 
 ```{r echo=FALSE}
 qplot(date, n_cases, 
       geom = "line",
       data=filter(totm, grepl("Hubei", `Province/State`))) +
-  geom_line(aes(date, conf_cases), lty = 2) +
-  geom_line(aes(date, recovered), lty = 2)
+  geom_line(aes(date, conf_cases), lty = 2, colour = "gray") +
+  geom_line(aes(date, recovered), lty = 2, colour = "blue") +
+  geom_line(aes(date, n_deaths), lty = 2, colour = "black")
 ```
 
 
