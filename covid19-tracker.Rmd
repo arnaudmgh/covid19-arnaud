@@ -19,7 +19,7 @@ library(plotly)
 setwd("/Users/aamzallag/code_programming/COVID-19/")
 
 system("git pull")
-cases_path <- "csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
+cases_path <- "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
 conf_cases <- read_csv(cases_path)
 
 timeinfo <- file.info(cases_path)
@@ -34,28 +34,29 @@ confm <- mutate(confm, region = coalesce(`Province/State`, `Country/Region`))
 
 ####
 ####   SUBTRACTING NUMBER OF RECOVERY, TO PLOT THE CONFIRMED _ACTIVE_ CASES (totm$n_cases)
-rec_cases <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")
+rec_cases <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
 recm <- melt(dplyr::select(rec_cases, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
              variable.name = "date", value.name = "recovered")
 recm$date <- as.Date(recm$date, format = "%m/%d/%y")
 totm <- full_join(confm, recm)
 totm <- mutate(totm, conf_cases = n_cases)
-totm <- mutate(totm, n_cases = conf_cases - recovered)
+na_rm <- function(x, replacement = 0) ifelse(is.na(x), replacement, x)
+totm <- mutate(totm, n_cases = conf_cases - na_rm(recovered))
 
-deaths <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")
+deaths <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
 deathm <- melt(dplyr::select(deaths, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
              variable.name = "date", value.name = "n_deaths")
 deathm$date <- as.Date(deathm$date, format = "%m/%d/%y")
 totm <- full_join(totm, deathm)
 totm <- mutate(totm, n_cases_old = n_cases)
-totm <- mutate(totm, n_cases = conf_cases - recovered - n_deaths)
+totm <- mutate(totm, n_cases = conf_cases - na_rm(recovered) - na_rm(n_deaths))
 
 
 ```
 
 ### UPDATE
 
-***March 17th 2020***: The numbers have been changed to reflect the number of active cases, by subtracting the number of recovered cases from the number of confirmed cases. Hence, the decreasing of cases is now visible all around China, and also in South Korea. 
+***March 25th 2020***: Data format from [CSSE](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) has been changing and is not reporting individual US states at the moment. Also, [they expressed doubt in the reliability of the number of recovered cases](https://github.com/CSSEGISandData/COVID-19/issues/1250#issuecomment-602271179), and claimed to stop reporting it. So we reverted two of the graphs to confirmed cases. 
 
 [//]: # Last data update: `r format(timeinfo$ctime, format = "%B %d %Y, %H:%M", usetz = TRUE)`
 (Last data update)
@@ -72,9 +73,11 @@ On March 15th, the number of confirmed cases outside of China exceeded the numbe
 
 ```{r echo=FALSE}
 summar <- group_by(totm, region = ifelse(`Country/Region` == "China", "China", "Ouside China"), date) %>% 
-  summarize(n_cases = sum(n_cases)) #%>% mutate(`Province/State` = "US", `Country/Region` = "US", region = "US")
+  summarize(n_cases = sum(n_cases, na.rm = TRUE), conf_cases = sum(conf_cases, na.rm = TRUE)) #%>% mutate(`Province/State` = "US", `Country/Region` = "US", region = "US")
 
-qplot(date, n_cases, colour = region, geom = "line", data = summar) + ylab("Confirmed Active Cases")
+qplot(date, conf_cases, colour = region, geom = "line", data = summar) + ylab("Confirmed Cases")
+
+#qplot(date, conf_cases, colour = region, geom = "line", data = summar) + ylab("Confirmed Active Cases")
 # binomial_smooth <- function(...) {
 #   geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
 # }
@@ -101,9 +104,9 @@ tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United King
 #       colour = paste(`Country/Region`, `Province/State`, sep = ", "), geom = "line",
 #       data=tmpdat) %>% ggplotly()
 
-qplot(date, n_cases, 
+(qplot(date, n_cases, 
       colour = region, geom = "line",
-      data=tmpdat) %>% ggplotly()
+      data=tmpdat)  + ylab("Active Cases")) %>% ggplotly()
 
 
 ```
@@ -111,15 +114,17 @@ qplot(date, n_cases,
 
 ### US
 
-New York state had an impressive surge on the 19th, adding in one day more cases than it had seen since the beginning of the epidemic. 
+Detailed US data is not available from the CSSE repository at the moment.
 
 ```{r echo=FALSE}
 library(plotly)
-qplot(date, n_cases, 
-      colour = `Province/State`, geom = "line",
-      data=filter(totm, grepl("US", `Country/Region`),
-                  !grepl(",", `Province/State`),
-                  date >= as.Date("2020-03-10"))) %>% ggplotly()
+# qplot(date, n_cases,
+#       colour = `Province/State`, geom = "line",
+#       data=filter(totm, grepl("US", `Country/Region`),
+#                   !grepl(",", `Province/State`),
+#                   date >= as.Date("2020-03-10"))) %>% ggplotly()
+# 
+
 ```
 
 
@@ -134,9 +139,10 @@ qplot(date, n_cases,
 The green line with cases that go up sharply at the end is Hong-Kong.
 
 ```{r echo=FALSE}
-qplot(date, n_cases, 
+#qplot(date, n_cases, 
+qplot(date, conf_cases, 
       colour = `Province/State`, geom = "line",
-      data=filter(totm, grepl("China", `Country/Region`), !grepl("Hubei", `Province/State`)))
+      data=filter(totm, grepl("China", `Country/Region`), !grepl("Hubei", `Province/State`)))  + ylab("Confirmed Cases")
 ```
 
 ### Hubei, China
