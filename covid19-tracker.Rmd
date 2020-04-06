@@ -16,14 +16,16 @@ library(plotly)
 
 
 ```{r echo=FALSE, message=FALSE}
+curdir = getwd()
 setwd("/Users/aamzallag/code_programming/COVID-19/")
-
 system("git pull")
-cases_path <- "csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+time_info <- system(paste("git log -1 --format=%cd", "./csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"), intern = TRUE)
+setwd(curdir)
+
+cases_path <- "../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
 conf_cases <- read_csv(cases_path)
 
 timeinfo <- file.info(cases_path)
-time_info <- system(paste("git log -1 --format=%cd", cases_path), intern = TRUE)
 
 confm <- melt(conf_cases, id.vars = c("Province/State", "Country/Region", "Lat", "Long"), 
               variable.name = "date", value.name = "n_cases")
@@ -34,7 +36,7 @@ confm <- mutate(confm, region = coalesce(`Province/State`, `Country/Region`))
 
 ####
 ####   SUBTRACTING NUMBER OF RECOVERY, TO PLOT THE CONFIRMED _ACTIVE_ CASES (totm$n_cases)
-rec_cases <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
+rec_cases <- read_csv("../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
 recm <- melt(dplyr::select(rec_cases, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
              variable.name = "date", value.name = "recovered")
 recm$date <- as.Date(recm$date, format = "%m/%d/%y")
@@ -43,7 +45,7 @@ totm <- mutate(totm, conf_cases = n_cases)
 na_rm <- function(x, replacement = 0) ifelse(is.na(x), replacement, x)
 totm <- mutate(totm, n_cases = conf_cases - na_rm(recovered))
 
-deaths <- read_csv("./csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+deaths <- read_csv("../COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
 deathm <- melt(dplyr::select(deaths, -Lat, -Long), id.vars = c("Province/State", "Country/Region"), 
              variable.name = "date", value.name = "n_deaths")
 deathm$date <- as.Date(deathm$date, format = "%m/%d/%y")
