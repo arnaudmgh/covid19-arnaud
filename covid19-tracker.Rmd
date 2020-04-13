@@ -100,7 +100,7 @@ Italy continues to rise sharply. US surges, mainly due to New York state.
 cases_US <- filter(totm, `Country/Region` == "US") %>% group_by(date) %>%
   summarize(n_cases = sum(n_cases, na.rm = TRUE)) %>% mutate(`Province/State` = "US", `Country/Region` = "US", region = "US")
 
-tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United Kingdom", "Israel", "Italy", "Iran", "Korea, South", "Belgium", "US"), date > as.Date("2020-02-24"))
+tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United Kingdom", "Israel", "Italy", "Iran", "Korea, South", "Belgium", "US", "Spain"), date > as.Date("2020-02-24"))
 
 # qplot(date, n_cases, 
 #       colour = paste(`Country/Region`, `Province/State`, sep = ", "), geom = "line",
