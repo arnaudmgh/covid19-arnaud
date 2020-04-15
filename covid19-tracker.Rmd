@@ -56,15 +56,18 @@ totm <- mutate(totm, n_cases = conf_cases - na_rm(recovered) - na_rm(n_deaths))
 
 ```
 
+<span style="font-size:larger;">**`r time_info`** --- Last data update (CSSE git time stamp)</span>
+
 ### UPDATE
+
+***April 13th 2020***
+Re-added US states; 10 most affected in terms of cases. 
 
 ***March 25th 2020***: Data format from [CSSE](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) has been changing and is not reporting individual US states at the moment. Also, [they expressed doubt in the reliability of the number of recovered cases](https://github.com/CSSEGISandData/COVID-19/issues/1250#issuecomment-602271179), and claimed to stop reporting it. So we reverted two of the graphs to confirmed cases. 
 
 [//]: # Last data update: `r format(timeinfo$ctime, format = "%B %d %Y, %H:%M", usetz = TRUE)`
-(Last data update)
-<span style="font-size:larger;">**`r time_info`** --- Last data update (git time stamp)</span>
 
-This page is pulling data from the [CSSE github repo](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series).
+This page is pulling data from the [John Hopkins CSSE github repo](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) and the [New york Times data](https://github.com/nytimes/covid-19-data).
 
 
 
@@ -116,7 +119,7 @@ tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United King
 
 ### US
 
-Detailed US data is not available from the CSSE repository at the moment.
+Detailed US data is not available from the CSSE repository at the moment. Using [New york Times data](https://github.com/nytimes/covid-19-data).
 
 ```{r echo=FALSE}
 library(plotly)
@@ -127,8 +130,29 @@ library(plotly)
 #                   date >= as.Date("2020-03-10"))) %>% ggplotly()
 # 
 
+curdir = getwd()
+print(curdir)
+setwd("../nytimes/covid-19-data/")
+system("git pull")
+setwd(curdir)
+usstates <- read_csv("../nytimes/covid-19-data/us-states.csv")
+staterank <- group_by(usstates, state) %>% summarize(n_case_last = cases[which.max(date)], 
+                                                     date = max(date)) %>% 
+  arrange(-n_case_last)
 ```
 
+#### Number of Cases per State
+(10 most affected states, ranked by recent cases)
+```{r}
+qplot(date, cases, colour = state, alpha = I(0.4), data=filter(usstates, state %in% staterank[1:10, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
+```
+
+#### Number of Death per State
+(Same 10 most affected states, ranked by recent cases (not deaths))
+
+```{r}
+qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:10, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
+```
 
 ```{r echo=FALSE}
 # qplot(date, n_cases, 
