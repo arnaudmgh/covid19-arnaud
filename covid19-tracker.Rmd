@@ -121,7 +121,7 @@ tmpdat <- filter(bind_rows(totm, cases_US), region %in% c("France", "United King
 
 Detailed US data is not available from the CSSE repository at the moment. Using [New york Times data](https://github.com/nytimes/covid-19-data).
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 library(plotly)
 # qplot(date, n_cases,
 #       colour = `Province/State`, geom = "line",
@@ -139,19 +139,25 @@ usstates <- read_csv("../nytimes/covid-19-data/us-states.csv")
 staterank <- group_by(usstates, state) %>% summarize(n_case_last = cases[which.max(date)], 
                                                      date = max(date)) %>% 
   arrange(-n_case_last)
+
+NS=20 # number of states to plot
 ```
 
 #### Number of Cases per State
-(10 most affected states, ranked by recent cases)
 ```{r echo=FALSE}
-qplot(date, cases, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:10, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
+
+```
+
+(`r NS` most affected states, ranked by recent cases)
+```{r echo=FALSE}
+qplot(date, cases, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
 ```
 
 #### Number of Death per State
-(Same 10 most affected states, ranked by recent cases (not deaths))
+(Same `r NS` most affected states, ranked by recent cases (not deaths))
 
 ```{r echo=FALSE}
-qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:10, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
+qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
 ```
 
 ```{r echo=FALSE}
