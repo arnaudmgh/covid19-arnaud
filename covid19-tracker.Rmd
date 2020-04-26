@@ -131,7 +131,7 @@ library(plotly)
 # 
 
 curdir = getwd()
-print(curdir)
+
 setwd("../nytimes/covid-19-data/")
 system("git pull")
 setwd(curdir)
@@ -153,17 +153,17 @@ NS=20 # number of states to plot
 qplot(date, cases, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
 ```
 
-#### Number of Death per State
+#### Number of Deaths per State
 (Same `r NS` most affected states, ranked by recent cases (not deaths))
 
 ```{r echo=FALSE}
 qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
 ```
 
-```{r echo=FALSE}
-# qplot(date, n_cases, 
-      # colour = `Province/State`, geom = "line",
-      # data=filter(confm, grepl("US", `Country/Region`), grepl("MA$", `Province/State`)))
+#### Number of deaths as function of number of cases (per state)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+(qplot(cases, deaths, colour = date, label = date, log = "xy", geom = "path", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) + facet_wrap(~ state))# %>% ggplotly()
 ```
 
 ### China, without Hubei
