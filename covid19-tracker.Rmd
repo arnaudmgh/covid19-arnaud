@@ -152,7 +152,7 @@ NS=20 # number of states to plot
 qplot(date, cases, colour = state, alpha = I(0.8), geom = "line", data=filter(usstates, state %in% staterank[1:NS, "state"][[1]], date>"2020-03-10")) %>% ggplotly()
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 usco <- read_csv("../nytimes/covid-19-data/us-counties.csv")
 
 pops <- read_csv("~/code_programming/covid19-arnaud/covid19-tracker.output/populations_us_counties.csv")
@@ -178,7 +178,7 @@ qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(u
 ```
 
 #### Massachusetts: Cases Rate (per 100,000) per County
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 qplot(date, signif(cases_per_100_000, 4), colour = county, label = paste(cases, signif(deaths_per_100_000, 4)), alpha = I(0.8), geom = "line", data=filter(usco, state == "Massachusetts", date>"2020-03-10")) %>% ggplotly()
 ```
 
