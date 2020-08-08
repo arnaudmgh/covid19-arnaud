@@ -49,7 +49,7 @@ grep("^\\.", invert = TRUE, pops$X1, value = TRUE)
 colnames(pops)[(ncol(pops)-1):ncol(pops)] <- c("county", "state")
 pops$county <- sub(" County", "", pops$county)
 
-write_csv(pops, )
+write_csv(pops, "~/code_programming/covid19-arnaud/covid19-tracker.output/populations_us_counties.csv")
 
 tmp <- left_join(counties, select(pops, X2019, county, state))
 table(is.na(tmp$X2019))

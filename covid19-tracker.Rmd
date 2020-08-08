@@ -157,7 +157,10 @@ usco <- read_csv("../nytimes/covid-19-data/us-counties.csv")
 
 pops <- read_csv("~/code_programming/covid19-arnaud/covid19-tracker.output/populations_us_counties.csv")
 usco <- left_join(usco, select(pops, pop2019 = X2019, county, state))
-usco <- mutate(usco, cases_per_100_000 = cases/pop2019*1e5, deaths_per_100_000 = deaths/pop2019*1e5)
+usco <- arrange(usco, state, county, date) %>% group_by(state, county) %>% mutate(n_times = n()) %>% ungroup() %>% filter(n_times>1) %>% group_by(state, county) %>% mutate(daily_cases = cases - cases[c(NA, 1:(length(cases)-1))]) %>% ungroup()
+usco <- group_by(usco, state, county) %>% mutate(daily_deaths = deaths - deaths[c(NA, 1:(length(deaths)-1))]) %>% ungroup()
+
+usco <- mutate(usco, cases_per_100_000 = cases/pop2019*1e5, deaths_per_100_000 = deaths/pop2019*1e5, daily_cases_per_100_000 = daily_cases/pop2019*1e5, daily_deaths_per_100_000 = daily_deaths/pop2019*1e5)
 
 
 # filter(usco, state == "Massachusetts") %>% group_by(county) %>% summarize()
@@ -181,6 +184,12 @@ qplot(date, deaths, colour = state, alpha = I(0.8), geom = "line", data=filter(u
 ```{r echo=FALSE, message=FALSE}
 qplot(date, signif(cases_per_100_000, 4), colour = county, label = paste(cases, signif(deaths_per_100_000, 4)), alpha = I(0.8), geom = "line", data=filter(usco, state == "Massachusetts", date>"2020-03-10")) %>% ggplotly()
 ```
+
+#### Massachusetts: Daily New Cases (per 100,000) per County
+```{r echo=FALSE, message=FALSE}
+(qplot(date, signif(daily_cases_per_100_000, 4), colour = county, label = paste(daily_cases, signif(deaths_per_100_000, 4)), alpha = I(0.2), geom = "point", data=filter(usco, state == "Massachusetts", date>"2020-03-10")) + geom_smooth() ) %>% ggplotly()
+```
+
 
 #### Massachusetts: Death Rate (per 100,000) per County
 ```{r echo=FALSE}
